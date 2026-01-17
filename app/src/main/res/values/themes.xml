@@ -1,0 +1,7 @@
+<resources>
+
+    <style name="Theme.YOLOConeDetector" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize aqui depois -->
+    </style>
+
+</resources>
