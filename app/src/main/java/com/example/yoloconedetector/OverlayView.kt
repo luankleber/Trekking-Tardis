@@ -12,7 +12,7 @@ class OverlayView @JvmOverloads constructor(
 
     private var results: List<YoloDetection> = emptyList()
     private val paint = Paint().apply {
-        color = Color.RED
+        color = Color.rgb(187, 0, 255)
         style = Paint.Style.STROKE
         strokeWidth = 6f
     }
