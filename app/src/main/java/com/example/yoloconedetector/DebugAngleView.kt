@@ -18,14 +18,19 @@ class DebugAngleView @JvmOverloads constructor(
     // Ângulo atual (rad)
     private var angleRad: Float = 0f
 
-    // Linha vertical central (referência zero)
+    // Estado atual do robô
+    private var stateText: String = "INIT"
+
+    /* ===============================
+       PAINTS
+       =============================== */
+
     private val centerPaint = Paint().apply {
         color = Color.rgb(0, 255, 0)
         strokeWidth = 10f
         isAntiAlias = true
     }
 
-    // Barra horizontal de erro (yaw)
     private val barPaint = Paint().apply {
         color = Color.GREEN
         strokeWidth = 14f
@@ -33,18 +38,16 @@ class DebugAngleView @JvmOverloads constructor(
         isAntiAlias = true
     }
 
-    // Texto HUD - CONTORNO
     private val textStrokePaint = Paint().apply {
         color = Color.BLACK
         letterSpacing = 0.1f
         textSize = 36f
         style = Paint.Style.STROKE
-        strokeWidth = 4f        // controla a “grossura” do contorno
+        strokeWidth = 4f
         isAntiAlias = true
         typeface = resources.getFont(R.font.sharetechmono_regular)
     }
 
-    // Texto HUD - PREENCHIMENTO
     private val textFillPaint = Paint().apply {
         color = Color.GREEN
         letterSpacing = 0.1f
@@ -54,17 +57,29 @@ class DebugAngleView @JvmOverloads constructor(
         typeface = resources.getFont(R.font.sharetechmono_regular)
     }
 
-    // Linha de dead-zone (opcional)
     private val deadZonePaint = Paint().apply {
         color = Color.GRAY
         strokeWidth = 8f
         isAntiAlias = true
     }
 
+    /* ===============================
+       API PÚBLICA
+       =============================== */
+
     fun setAngle(angle: Float) {
         angleRad = angle
         invalidate()
     }
+
+    fun setState(state: String) {
+        stateText = state
+        invalidate()
+    }
+
+    /* ===============================
+       DESENHO
+       =============================== */
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -72,13 +87,10 @@ class DebugAngleView @JvmOverloads constructor(
         val w = width.toFloat()
         val h = height.toFloat()
 
-        // Centro da HUD
         val cx = w * 0.5f
-        val cy = h * 0.15f   // HUD um pouco abaixo do centro
+        val cy = h * 0.15f
 
-        /* ===============================
-           1) LINHA CENTRAL (referência)
-           =============================== */
+        /* -------- Linha central -------- */
         canvas.drawLine(
             cx,
             cy - 40f,
@@ -87,41 +99,36 @@ class DebugAngleView @JvmOverloads constructor(
             centerPaint
         )
 
-        /* ===============================
-           2) TEXTO HUD
-           =============================== */
+        /* -------- Texto YAW -------- */
         val deg = Math.toDegrees(angleRad.toDouble())
-        val text = String.format("TARGET YAW %.1f°", deg)
+        val yawText = String.format("TARGET YAW %.1f°", deg)
 
-// contorno
+        canvas.drawText(yawText, cx - 170f, cy - 60f, textStrokePaint)
+        canvas.drawText(yawText, cx - 170f, cy - 60f, textFillPaint)
+
+        /* -------- Texto STATE -------- */
+        val stateY = cy + 100f
+
         canvas.drawText(
-            text,
-            cx - 170f,
-            cy - 60f,
+            "STATE: $stateText",
+            cx - 220f,
+            stateY,
             textStrokePaint
         )
 
-// preenchimento
         canvas.drawText(
-            text,
-            cx - 170f,
-            cy - 60f,
+            "STATE: $stateText",
+            cx - 220f,
+            stateY,
             textFillPaint
         )
 
-        /* ===============================
-           3) NORMALIZAÇÃO DO ÂNGULO
-           =============================== */
-
-        // Ângulo máximo visual (ex: metade do FOV)
+        /* -------- Normalização -------- */
         val maxAngle = Math.toRadians(35.0).toFloat()
-
         var norm = angleRad / maxAngle
         norm = max(-1f, min(1f, norm))
 
-        /* ===============================
-           4) DEAD ZONE VISUAL (±2°)
-           =============================== */
+        /* -------- Dead zone -------- */
         val deadZoneRad = Math.toRadians(4.0).toFloat()
         val deadZonePx = (deadZoneRad / maxAngle) * (w * 0.4f)
 
@@ -133,30 +140,17 @@ class DebugAngleView @JvmOverloads constructor(
             deadZonePaint
         )
 
-        /* ===============================
-           5) COR DINÂMICA DA BARRA
-           =============================== */
+        /* -------- Cor da barra -------- */
         barPaint.color = when {
-            abs(angleRad) < deadZoneRad -> Color.GREEN   // alinhado
-            angleRad > 0f -> Color.RED                  // erro à direita
-            else -> Color.YELLOW                        // erro à esquerda
+            abs(angleRad) < deadZoneRad -> Color.GREEN
+            angleRad > 0f -> Color.RED
+            else -> Color.YELLOW
         }
 
-        /* ===============================
-           6) BARRA DE ERRO (yaw)
-           =============================== */
+        /* -------- Barra -------- */
         val barLength = abs(norm) * (w * 0.4f)
+        val endX = if (norm >= 0f) cx + barLength else cx - barLength
 
-        val endX =
-            if (norm >= 0f) cx + barLength
-            else cx - barLength
-
-        canvas.drawLine(
-            cx,
-            cy,
-            endX,
-            cy,
-            barPaint
-        )
+        canvas.drawLine(cx, cy, endX, cy, barPaint)
     }
 }
