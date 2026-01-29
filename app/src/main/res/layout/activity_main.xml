@@ -69,4 +69,14 @@
         app:layout_constraintTop_toTopOf="@id/mapView"
         app:layout_constraintStart_toEndOf="@id/addWaypointButton" />
 
+    <!-- Botão Ir para WaypointsManager -->
+    <Button
+        android:id="@+id/openWaypointManagerButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Waypoints"
+        android:layout_margin="100dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

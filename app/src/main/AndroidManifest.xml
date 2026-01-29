@@ -47,6 +47,12 @@
 
         </activity>
 
+        <!-- WAYPOINT MANAGER -->
+        <activity
+            android:name=".WaypointManagerActivity"
+            android:label="Waypoint Manager"
+            android:screenOrientation="portrait" />
+
     </application>
 
 

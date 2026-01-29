@@ -1,6 +1,7 @@
 package com.example.yoloconedetector
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -63,14 +64,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var clearWaypointsButton: Button
     private lateinit var googleMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private val waypoints = mutableListOf<Marker>()
 
     // Trajeto percorrido
     private val pathPoints = mutableListOf<LatLng>()
     private var pathPolyline: Polyline? = null
 
-    // Sequência waypoints
-    private var sequencePolyline: Polyline? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,8 +79,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         previewView = findViewById(R.id.previewView)
         overlayView = findViewById(R.id.overlayView)
         debugAngleView = findViewById(R.id.debugAngleView)
-        addWaypointButton = findViewById(R.id.addWaypointButton)
-        clearWaypointsButton = findViewById(R.id.clearWaypointsButton)
 
         // --- YOLO / IMU / BLUETOOTH ---
         yoloDetector = YOLODetector(this, "best_modelo.tflite", 320)
@@ -97,27 +93,43 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        addWaypointButton = findViewById(R.id.addWaypointButton)
+        clearWaypointsButton = findViewById(R.id.clearWaypointsButton)
 
+        /* =========================
+        BOTÃO PARA WAYPOINT MANAGER
+        ========================= */
+        val waypointButton = findViewById<Button>(R.id.openWaypointManagerButton)
+
+        waypointButton.setOnClickListener {
+            val intent = Intent(this, WaypointManagerActivity::class.java)
+            startActivity(intent)
+        }
+
+        //BOTÃO PARA ADICIONAR WAYPOINT NA POSIÇÃO ATUAL
         addWaypointButton.setOnClickListener {
-            if (::googleMap.isInitialized) {
-                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    location?.let {
-                        val pos = LatLng(it.latitude, it.longitude)
-                        val marker = googleMap.addMarker(
-                            MarkerOptions().position(pos).title("Waypoint ${waypoints.size + 1}")
-                        )
-                        if (marker != null) waypoints.add(marker)
-                        drawWaypointSequence()
-                    }
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) return@setOnClickListener
+
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                location?.let {
+                    val pos = LatLng(it.latitude, it.longitude)
+                    WaypointStore.add(pos)
+                    drawWaypointsFromStore()
                 }
             }
         }
 
+        //BOTÃO PARA LIMPAR OS WAYPOINTS
         clearWaypointsButton.setOnClickListener {
-            waypoints.forEach { it.remove() }
-            waypoints.clear()
-            sequencePolyline?.remove()
+            WaypointStore.clear()
+            drawWaypointsFromStore()
         }
+
+
     }
 
     override fun onDestroy() {
@@ -130,6 +142,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onResume() {
         super.onResume()
         mapView.onResume()
+        if (::googleMap.isInitialized) {
+            drawWaypointsFromStore()
+        }
     }
 
     override fun onPause() {
@@ -273,6 +288,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap = map
         googleMap.uiSettings.isZoomControlsEnabled = true
         googleMap.uiSettings.isCompassEnabled = true
+        drawWaypointsFromStore()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             enableLocation()
@@ -280,6 +296,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1234)
         }
     }
+
+    private fun drawWaypointsFromStore() {
+        googleMap.clear()
+
+        val points = WaypointStore.waypoints
+
+        points.forEachIndexed { index, point ->
+            googleMap.addMarker(
+                MarkerOptions()
+                    .position(point)
+                    .title("Waypoint $index")
+            )
+        }
+
+        if (points.size >= 2) {
+            googleMap.addPolyline(
+                PolylineOptions()
+                    .addAll(points + points.first())
+                    .color(Color.RED)
+                    .width(4f)
+                    .pattern(listOf(Dot(), Gap(10f)))
+            )
+        }
+    }
+
+
 
     private fun enableLocation() {
         googleMap.isMyLocationEnabled = true
@@ -303,19 +345,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun drawWaypointSequence() {
-        sequencePolyline?.remove()
-        if (waypoints.size >= 2) {
-            val orderedPoints = waypoints.map { it.position }
-            sequencePolyline = googleMap.addPolyline(
-                PolylineOptions()
-                    .addAll(orderedPoints + orderedPoints.first())
-                    .color(Color.RED)
-                    .width(4f)
-                    .pattern(listOf(Dot(), Gap(10f)))
-            )
-        }
-    }
 }
 
 /* =========================

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- MAPA -->
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- PAINEL DE WAYPOINTS -->
+    <LinearLayout
+        android:id="@+id/waypointPanel"
+        android:layout_width="0dp"
+        android:layout_height="220dp"
+        android:orientation="horizontal"
+        android:background="#CC000000"
+        android:padding="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- LISTA -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/waypointRecycler"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clipToPadding="false"/>
+
+        <!-- COLUNA DE BOTÕES -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="12dp">
+
+            <Button
+                android:id="@+id/undoWaypointButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Undo"/>
+
+            <Button
+                android:id="@+id/clearWaypointsButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear WPs"
+                android:layout_marginTop="8dp"/>
+
+            <Button
+                android:id="@+id/clearPathButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear Path"
+                android:layout_marginTop="8dp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
